@@ -1,11 +1,8 @@
-re
-time
-collections
-datetime
-io
-altair
-nltk
-numpy
-pandas
 streamlit
+pandas
+numpy
+openpyxl
 rapidfuzz
+nltk
+altair
+nest_asyncio
