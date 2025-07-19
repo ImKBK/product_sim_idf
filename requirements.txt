@@ -1,5 +1,11 @@
-streamlit
-pandas
+re
+time
+collections
+datetime
+io
+altair
+nltk
 numpy
-openpyxl
+pandas
+streamlit
 rapidfuzz
