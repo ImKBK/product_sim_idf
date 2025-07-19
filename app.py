@@ -57,6 +57,7 @@ if uploaded_file:
 
         df = df[[nankey_col, desc_col]]
         df.columns = ["NANKEY", "PROD_DESC"]
+        df = df.dropna(subset=["PROD_DESC"]).reset_index(drop=True)
 
         threshold = st.slider("Select Similarity Threshold (0-100)", min_value=0, max_value=100, value=60, step=1)
 
@@ -140,35 +141,6 @@ if uploaded_file:
 
             st.subheader("Charts")
 
-            if not pivot_df.empty:
-                top_bulk = pivot_df.head(10)
-                chart = alt.Chart(top_bulk).mark_bar().encode(
-                    x=alt.X('Bulk Group ID:O', sort='-y', title='Bulk Group ID'),
-                    y=alt.Y('Count of Bulk Group ID:Q', title='Items in Group'),
-                    tooltip=['Bulk Group ID', 'Count of Bulk Group ID']
-                ).properties(
-                    title='Top 10 Bulk Groups by Size',
-                    width=600,
-                    height=400
-                )
-                st.altair_chart(chart, use_container_width=True)
-
-            # Pie chart for unique vs bulk items
-            unique_count = len(unique_items)
-            bulk_count = sum(len(group) for group in bulk_groups)
-            data = pd.DataFrame({
-                'Type': ['Unique Items', 'Bulk Items'],
-                'Count': [unique_count, bulk_count]
-            })
-            pie_chart = alt.Chart(data).mark_arc(innerRadius=50).encode(
-                theta='Count:Q',
-                color='Type:N',
-                tooltip=['Type', 'Count']
-            ).properties(
-                title='Unique vs Bulk Items Distribution'
-            )
-            st.altair_chart(pie_chart, use_container_width=True)
-
             output.seek(0)
             unique_df_check = pd.read_excel(output, sheet_name='Unique Items')
             unique_df_check.columns = unique_df_check.columns.str.strip().str.lower()
@@ -187,6 +159,7 @@ if uploaded_file:
             filtered_bigrams = [(pair, count) for pair, count in bigram_counts.items() if pair not in excluded_bigrams]
             all_bigrams_with_counts = sorted(filtered_bigrams, key=lambda x: x[1], reverse=True)
 
+            # 1️⃣ Top 10 Bigrams First
             if all_bigrams_with_counts:
                 st.subheader("Top 10 Frequent Word Pairs in Unique Sheet")
                 top10_bigram_df = pd.DataFrame(
@@ -217,6 +190,36 @@ if uploaded_file:
                 )
             else:
                 st.info("No frequent bigrams found in Unique Items.")
+
+            # 2️⃣ Pie Chart Second
+            unique_count = len(unique_items)
+            bulk_count = sum(len(group) for group in bulk_groups)
+            data = pd.DataFrame({
+                'Type': ['Unique Items', 'Bulk Items'],
+                'Count': [unique_count, bulk_count]
+            })
+            pie_chart = alt.Chart(data).mark_arc(innerRadius=50).encode(
+                theta='Count:Q',
+                color='Type:N',
+                tooltip=['Type', 'Count']
+            ).properties(
+                title='Unique vs Bulk Items Distribution'
+            )
+            st.altair_chart(pie_chart, use_container_width=True)
+
+            # 3️⃣ Bulk Groups Bar Chart Last
+            if not pivot_df.empty:
+                top_bulk = pivot_df.head(10)
+                chart = alt.Chart(top_bulk).mark_bar().encode(
+                    x=alt.X('Bulk Group ID:O', sort='-y', title='Bulk Group ID'),
+                    y=alt.Y('Count of Bulk Group ID:Q', title='Items in Group'),
+                    tooltip=['Bulk Group ID', 'Count of Bulk Group ID']
+                ).properties(
+                    title='Top 10 Bulk Groups by Size',
+                    width=600,
+                    height=400
+                )
+                st.altair_chart(chart, use_container_width=True)
 
     except Exception as e:
         st.error(f"Error processing file: {e}")
